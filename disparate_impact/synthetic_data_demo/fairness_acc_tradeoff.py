@@ -26,6 +26,7 @@ def test_synthetic_data():
 	print ("== Unconstrained (original) classifier ==")
 	ut.print_classifier_fairness_stats(test_acc_arr, correlation_dict_test_arr, cov_dict_test_arr, "s1")
 
+
 	""" Now classify such that we achieve perfect fairness """
 	apply_fairness_constraints = 1
 	cov_factor = 0
