@@ -1,4 +1,4 @@
-from prepare_adult_data import *
+from generate_synthetic_data import *
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -12,7 +12,6 @@ import loss_funcs as lf
 NUM_FOLDS=10
 
 def print_classifier_fairness_stats(acc_arr, correlation_dict_arr, cov_dict_arr, s_attr_name):
-    
     correlation_dict = ut.get_avg_correlation_dict(correlation_dict_arr)
     non_prot_pos = correlation_dict[s_attr_name][1][1]
     prot_pos = correlation_dict[s_attr_name][0][1]
@@ -24,7 +23,7 @@ def print_classifier_fairness_stats(acc_arr, correlation_dict_arr, cov_dict_arr,
     print()
     return p_rule
 
-def Train_test_classifier(random_x_train, random_y_train, random_x_control_train,apply_fairness_constraints, apply_accuracy_constraint):
+def Train_test_classifier(random_x_train, random_y_train, random_x_control_train, x_test, y_test, apply_fairness_constraints, apply_accuracy_constraint):
     w1 = ut.train_model(random_x_train, random_y_train, random_x_control_train, loss_function, apply_fairness_constraints, apply_accuracy_constraint, sep_constraint, sensitive_attrs, sensitive_attrs_to_cov_thresh, gamma)
     train_score, test_score, correct_answers_train, correct_answers_test = ut.check_accuracy(w1, random_x_train,random_y_train, x_test, y_test, None, None)
     distances_boundary_test = (np.dot(x_test, w1)).tolist()
@@ -34,6 +33,7 @@ def Train_test_classifier(random_x_train, random_y_train, random_x_control_train
     p_rule = print_classifier_fairness_stats([test_score], [correlation_dict_test], [cov_dict_test], sensitive_attrs[0])   
     return w1, p_rule, test_score
 
+
 def generate_uniform_sampling(x_train, y_train, x_control_train, num_points):
     num_rows = len(x_train)
     random_indices = np.random.choice(num_rows, num_points, replace=False)
@@ -42,6 +42,7 @@ def generate_uniform_sampling(x_train, y_train, x_control_train, num_points):
     random_x_control_train = {attr: x_control_train[attr][random_indices] for attr in x_control_train}
 
     return random_x_train, random_y_train, random_x_control_train
+
 
 def plot_num_points_vs_accuracy_and_P_rule(num_points_list, accuracy_list, p_rule_list, constraint_type):
     fig, ax1 = plt.subplots()
@@ -65,9 +66,9 @@ def plot_num_points_vs_accuracy_and_P_rule(num_points_list, accuracy_list, p_rul
     plt.show()
 
 if __name__ == '__main__':
-    # Load the adult data
-    X, y, x_control = load_adult_data() 
-    ut.compute_p_rule(x_control["sex"], y) 
+    # Load the synthetic data
+    X, y, x_control = generate_synthetic_data(plot_data=False) 
+    ut.compute_p_rule(x_control["s1"], y) 
 
     # Split the data into train and test
     X = ut.add_intercept(X) 
@@ -75,12 +76,12 @@ if __name__ == '__main__':
     x_train, y_train, x_control_train, x_test, y_test, x_control_test = ut.split_into_train_test(X, y, x_control, train_fold_size)
 
     loss_function = lf._logistic_loss
-    sensitive_attrs = ["sex"]
+    sensitive_attrs = ["s1"]
     sensitive_attrs_to_cov_thresh = {}
     gamma = None
 
     # Define the list of num_points values
-    num_points_list = [300, 500, 1500, 2500, 5000]
+    num_points_list = [300, 500, 1000, 1500, 2500]
 
     # Lists to store number of points and corresponding accuracies and p-rules
     accuracy_list_f = []
@@ -103,8 +104,8 @@ if __name__ == '__main__':
             apply_accuracy_constraint = 0
             sep_constraint = 0
             
-            sensitive_attrs_to_cov_thresh = {"sex": 0}
-            w_f, prule_f, acc_f = Train_test_classifier(random_x_train, random_y_train, random_x_control_train, apply_fairness_constraints, apply_accuracy_constraint)
+            sensitive_attrs_to_cov_thresh = {"s1": 0}
+            _, prule_f, acc_f = Train_test_classifier(random_x_train, random_y_train, random_x_control_train, x_test, y_test, apply_fairness_constraints, apply_accuracy_constraint)
             
             total_acc_f += acc_f
             total_prule_f += prule_f
@@ -114,7 +115,7 @@ if __name__ == '__main__':
             apply_accuracy_constraint = 1
             sep_constraint=0
             gamma = 0.5
-            w_a, prule_a, acc_a = Train_test_classifier(random_x_train, random_y_train, random_x_control_train, apply_fairness_constraints, apply_accuracy_constraint)
+            _, prule_a, acc_a = Train_test_classifier(random_x_train, random_y_train, random_x_control_train, x_test, y_test, apply_fairness_constraints, apply_accuracy_constraint)
             
             total_acc_a += acc_a
             total_prule_a += prule_a
@@ -136,7 +137,8 @@ if __name__ == '__main__':
         print(f"Average p%-rule (Fairness Constraint): {avg_prule_f}")
         print(f"Average Accuracy (Accuracy Constraint): {avg_acc_a}")
         print(f"Average p%-rule (Accuracy Constraint): {avg_prule_a}")
+        print()
 
-    # Plotting
+     # Plotting
     plot_num_points_vs_accuracy_and_P_rule(num_points_list, accuracy_list_f, p_rule_list_f, "Fairness")
     plot_num_points_vs_accuracy_and_P_rule(num_points_list, accuracy_list_a, p_rule_list_a, "Accuracy")

@@ -15,7 +15,7 @@ def generate_synthetic_data(plot_data=False):
     A sensitive feature value of 0.0 means the example is considered to be in protected group (e.g., female) and 1.0 means it's in non-protected group (e.g., male).
     """
 
-    n_samples = 1000  # generate these many data points per class
+    n_samples = 5000  # generate these many data points per class
     disc_factor = math.pi / 4.0  # this variable determines the initial discrimination in the data -- decrease it to generate more discrimination
 
     def gen_gaussian(mean_in, cov_in, class_label):
@@ -68,7 +68,7 @@ def generate_synthetic_data(plot_data=False):
 
     """ Show the data """
     if plot_data:
-        num_to_draw = 200  # we will only draw a small number of points to avoid clutter
+        num_to_draw = 1000  # we will only draw a small number of points to avoid clutter
         x_draw = X[:num_to_draw]
         y_draw = y[:num_to_draw]
         x_control_draw = x_control[:num_to_draw]

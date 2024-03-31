@@ -21,11 +21,11 @@ def print_classifier_fairness_stats(acc_arr, correlation_dict_arr, cov_dict_arr,
     return p_rule
 
 
-def leverage_score_sampling_svd(x_train, y_train, x_control_train, num_points):
+def sqrt_leverage_score_sampling_svd(x_train, y_train, x_control_train, num_points):
     # Ensure y_train is a column vector
     y_train_col = y_train.reshape(-1, 1) if y_train.ndim == 1 else y_train
 
-    # Assuming x_control_train is already a DataFrame
+    # Check if x_control_train is already a DataFrame, if not convert it
     x_control_train_df = x_control_train if isinstance(x_control_train, pd.DataFrame) else pd.DataFrame(x_control_train)
 
     # Concatenate x_train, y_train_col, and x_control_train_df to form the dataset matrix
@@ -34,14 +34,17 @@ def leverage_score_sampling_svd(x_train, y_train, x_control_train, num_points):
     # Perform Singular Value Decomposition
     U, Sigma, Vt = np.linalg.svd(dataset_matrix, full_matrices=False)
 
-    # Calculate the norms (squared) of the rows of U to get leverage scores
+    # Calculate the leverage scores (squared norms of the rows of U)
     leverage_scores = np.linalg.norm(U, axis=1)**2
 
-    # Normalize leverage scores to get a probability distribution
-    leverage_scores_normalized = leverage_scores / np.sum(leverage_scores)
+    # Calculate square root of leverage scores
+    sqrt_leverage_scores = np.sqrt(leverage_scores)
 
-    # Choose num_points random indices based on the normalized leverage scores
-    random_indices = np.random.choice(len(dataset_matrix), num_points, replace=False, p=leverage_scores_normalized)
+    # Normalize the square root leverage scores to get a probability distribution
+    sqrt_leverage_scores_normalized = sqrt_leverage_scores / np.sum(sqrt_leverage_scores)
+
+    # Choose num_points random indices based on the normalized square root leverage scores
+    random_indices = np.random.choice(len(dataset_matrix), num_points, replace=False, p=sqrt_leverage_scores_normalized)
 
     # Extract the corresponding rows from the datasets
     random_x_train = x_train[random_indices]
@@ -97,7 +100,7 @@ def test_leverage_score_sampling():
         total_prule_2 = 0
         
         for _ in range(10):  # Run each configuration five times
-            random_x_train, random_y_train, random_x_control_train = leverage_score_sampling_svd(x_train, y_train, x_control_train, num_points)
+            random_x_train, random_y_train, random_x_control_train = sqrt_leverage_score_sampling_svd(x_train, y_train, x_control_train, num_points)
          
             ut.compute_p_rule(random_x_control_train["sex"], random_y_train)
 
@@ -147,6 +150,7 @@ def test_leverage_score_sampling():
     # Plotting
     us.plot_num_points_vs_accuracy_and_P_rule(num_points_list, accuracy_list, p_rule_list, "Fairness")
     us.plot_num_points_vs_accuracy_and_P_rule(num_points_list, accuracy_list2, p_rule_list2, "Accuracy")
+
 
 def main():
 	test_leverage_score_sampling()
