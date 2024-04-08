@@ -5,7 +5,7 @@ sys.path.insert(0, '../../fair_classification/') # the code for fair classificat
 import utils as ut
 import loss_funcs as lf
 import Uniform_sampling as us
-
+import time
 
 def print_classifier_fairness_stats(acc_arr, correlation_dict_arr, cov_dict_arr, s_attr_name):
     
@@ -95,10 +95,18 @@ def test_leverage_score_sampling():
         total_acc_2 = 0
         total_prule_1 = 0
         total_prule_2 = 0
+        exe_sample =0
+        exe_fairness = 0
+        exe_accuracy = 0
         
-        for _ in range(10):  # Run each configuration five times
+        for _ in range(5):  # Run each configuration five times
+            start_time = time.time()
             random_x_train, random_y_train, random_x_control_train = leverage_score_sampling_svd(x_train, y_train, x_control_train, num_points)
-         
+            end_time = time.time()
+
+            # Calculate the execution time
+            e = end_time - start_time
+            exe_sample+=e
             ut.compute_p_rule(random_x_control_train["sex"], random_y_train)
 
             
@@ -108,7 +116,14 @@ def test_leverage_score_sampling():
             sensitive_attrs_to_cov_thresh = {"sex": 0}
             
             print("== Classifier with fairness constraint ==")
+            start_time1 = time.time()
             w_f_, prule_f, acc_f = train_test_classifier(random_x_train, random_y_train, random_x_control_train)
+            end_time1 = time.time()
+            
+
+            # Calculate the execution time
+            e1 = end_time1 - start_time1
+            exe_fairness+=e1
             
             total_acc_1 += acc_f
             total_prule_1 += prule_f
@@ -119,17 +134,25 @@ def test_leverage_score_sampling():
             sep_constraint = 0
             gamma = 0.5 
             print("== Classifier with accuracy constraint ==")
+            start_time2 = time.time()
             w_a_, prule_a, acc_a = train_test_classifier(random_x_train, random_y_train, random_x_control_train)
+            end_time2 = time.time()
             
+            # Calculate the execution time
+            e2 = end_time2 - start_time2
+            exe_accuracy+=e2
             total_acc_2 += acc_a
             total_prule_2 += prule_a
 
         # Calculate average accuracy
-        avg_acc_f = total_acc_1 / 10
-        avg_acc_a = total_acc_2 / 10
-        avg_prule_f = total_prule_1 / 10
-        avg_prule_a = total_prule_2 / 10
- 
+        avg_acc_f = total_acc_1 / 5
+        avg_acc_a = total_acc_2 / 5
+        avg_prule_f = total_prule_1 / 5
+        avg_prule_a = total_prule_2 / 5
+        avg_exe_sample = exe_sample/5
+        avg_exe_fairness = exe_fairness/5
+        avg_exe_accuracy = exe_accuracy/5
+
         # Append average accuracy to the lists
         accuracy_list.append(avg_acc_f)
         p_rule_list.append(avg_prule_f)
@@ -141,7 +164,9 @@ def test_leverage_score_sampling():
         print(f"Average p%-rule (Fairness Constraint): {avg_prule_f}")
         print(f"Average Accuracy (Accuracy Constraint): {avg_acc_a}")
         print(f"Average p%-rule (Accuracy Constraint): {avg_prule_a}")
-
+        print("execution time of sample = ",avg_exe_sample)
+        print("execution time of fairness = ",avg_exe_fairness)
+        print("execution time of accuracy = ",avg_exe_accuracy)
         
 
     # Plotting

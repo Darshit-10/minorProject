@@ -4,7 +4,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import sys
 import multiprocessing as mp
-
+import time
 sys.path.insert(0, '../../fair_classification/')
 import utils as ut
 import loss_funcs as lf
@@ -42,6 +42,7 @@ def generate_uniform_sampling(x_train, y_train, x_control_train, num_points):
     random_x_control_train = {attr: x_control_train[attr][random_indices] for attr in x_control_train}
 
     return random_x_train, random_y_train, random_x_control_train
+ 
 
 def plot_num_points_vs_accuracy_and_P_rule(num_points_list, accuracy_list, p_rule_list, constraint_type):
     fig, ax1 = plt.subplots()
@@ -81,41 +82,63 @@ if __name__ == '__main__':
 
     # Define the list of num_points values
     num_points_list = [300, 500, 1500, 2500, 5000]
-
     # Lists to store number of points and corresponding accuracies and p-rules
     accuracy_list_f = []
     p_rule_list_f = []
     accuracy_list_a = []
     p_rule_list_a = []
-
     # Loop through each num_points value
     for num_points in num_points_list:
         total_acc_f = 0
         total_acc_a = 0
         total_prule_f = 0
         total_prule_a = 0
-        
+        exe_sample =0
+        exe_fairness = 0
+        exe_accuracy = 0
+        print(" For sample size",num_points)
         for _ in range(5):  # Run each configuration five times
+            start_time = time.time()
             random_x_train, random_y_train, random_x_control_train = generate_uniform_sampling(x_train, y_train, x_control_train, num_points)
+            end_time = time.time()
+
+            # Calculate the execution time
+            e = end_time - start_time
+            exe_sample+=e
 
             # Classifier with fairness constraint
+
+            print("== Classifier with fairness constraint ==")
             apply_fairness_constraints = 1
             apply_accuracy_constraint = 0
             sep_constraint = 0
             
             sensitive_attrs_to_cov_thresh = {"sex": 0}
+            start_time1 = time.time()
             w_f, prule_f, acc_f = Train_test_classifier(random_x_train, random_y_train, random_x_control_train, apply_fairness_constraints, apply_accuracy_constraint)
+            end_time1 = time.time()
             
+
+            # Calculate the execution time
+            e1 = end_time1 - start_time1
+            exe_fairness+=e1
+
             total_acc_f += acc_f
             total_prule_f += prule_f
 
             # Classifier with accuracy constraint
+            print("== Classifier with accuracy constraint ==")
             apply_fairness_constraints = 0
             apply_accuracy_constraint = 1
             sep_constraint=0
             gamma = 0.5
+            start_time2 = time.time()
             w_a, prule_a, acc_a = Train_test_classifier(random_x_train, random_y_train, random_x_control_train, apply_fairness_constraints, apply_accuracy_constraint)
+            end_time2 = time.time()
             
+            # Calculate the execution time
+            e2 = end_time2 - start_time2
+            exe_accuracy+=e2
             total_acc_a += acc_a
             total_prule_a += prule_a
 
@@ -124,6 +147,9 @@ if __name__ == '__main__':
         avg_acc_a = total_acc_a / 5
         avg_prule_f = total_prule_f / 5
         avg_prule_a = total_prule_a / 5
+        avg_exe_sample = exe_sample/5
+        avg_exe_fairness = exe_fairness/5
+        avg_exe_accuracy = exe_accuracy/5
 
         # Append average accuracy and p-rule to the lists
         accuracy_list_f.append(avg_acc_f)
@@ -132,10 +158,15 @@ if __name__ == '__main__':
         accuracy_list_a.append(avg_acc_a)
         p_rule_list_a.append(avg_prule_a)
 
+   
+
         print(f"Average Accuracy (Fairness Constraint): {avg_acc_f}")
         print(f"Average p%-rule (Fairness Constraint): {avg_prule_f}")
         print(f"Average Accuracy (Accuracy Constraint): {avg_acc_a}")
         print(f"Average p%-rule (Accuracy Constraint): {avg_prule_a}")
+        print("execution time of sample = ",avg_exe_sample)
+        print("execution time of fairness = ",avg_exe_fairness)
+        print("execution time of accuracy = ",avg_exe_accuracy)
 
     # Plotting
     plot_num_points_vs_accuracy_and_P_rule(num_points_list, accuracy_list_f, p_rule_list_f, "Fairness")

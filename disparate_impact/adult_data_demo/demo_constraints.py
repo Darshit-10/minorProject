@@ -4,8 +4,9 @@ from prepare_adult_data import *
 sys.path.insert(0, '../../fair_classification/') # the code for fair classification is in this directory
 import utils as ut
 import loss_funcs as lf # loss funcs that can be optimized subject to various constraints
-
+import time
 NUM_FOLDS = 10
+
 
 def test_adult_data():
 	
@@ -44,12 +45,17 @@ def test_adult_data():
 	print()
 	print ("== Unconstrained (original) classifier ==")
 	# all constraint flags are set to 0 since we want to train an unconstrained (original) classifier
+	start_time = time.time()
 	apply_fairness_constraints = 0
 	apply_accuracy_constraint = 0
 	sep_constraint = 0
 	w_uncons, p_uncons, acc_uncons = train_test_classifier()
+	end_time = time.time()
+	e = end_time-start_time
+	print("For the Unconstrained (original) classifier the Execution time is ",e , "second")
 
 	""" Now classify such that we optimize for accuracy while achieving perfect fairness """
+	start_time2 = time.time()
 	apply_fairness_constraints = 1 # set this flag to one since we want to optimize accuracy subject to fairness constraints
 	apply_accuracy_constraint = 0
 	sep_constraint = 0
@@ -57,34 +63,37 @@ def test_adult_data():
 	print()
 	print ("== Classifier with fairness constraint ==")
 	w_f_cons, p_f_cons, acc_f_cons  = train_test_classifier()
-
+	end_time2 = time.time()
+	e2 = end_time2-start_time2
+	print("For the Classifier with fairness constraint the Execution time is ",e2 , "second")
 	
 
 	""" Classify such that we optimize for fairness subject to a certain loss in accuracy """
+	start_time3 = time.time()
 	apply_fairness_constraints = 0 # flag for fairness constraint is set back to0 since we want to apply the accuracy constraint now
 	apply_accuracy_constraint = 1 # now, we want to optimize fairness subject to accuracy constraints
 	sep_constraint = 0
 	gamma = 0.5 # gamma controls how much loss in accuracy we are willing to incur to achieve fairness -- increase gamme to allow more loss in accuracy
 	print ("== Classifier with accuracy constraint ==")
 	w_a_cons, p_a_cons, acc_a_cons = train_test_classifier()	
-
-	""" 
-	Classify such that we optimize for fairness subject to a certain loss in accuracy 
-	In addition, make sure that no points classified as positive by the unconstrained (original) classifier are misclassified.
-
-	"""
-	apply_fairness_constraints = 0 # flag for fairness constraint is set back to0 since we want to apply the accuracy constraint now
-	apply_accuracy_constraint = 1 # now, we want to optimize accuracy subject to fairness constraints
-	sep_constraint = 1 # set the separate constraint flag to one, since in addition to accuracy constrains, we also want no misclassifications for certain points (details in demo README.md)
-	gamma = 1000.0
-	print ("== Classifier with accuracy constraint (no +ve misclassification) ==")
-	w_a_cons_fine, p_a_cons_fine, acc_a_cons_fine  = train_test_classifier()
+	end_time3 = time.time()
+	e3 = end_time3-start_time3
+	print("For the Classifier with accuracy constraint the Execution time is ",e3 , "second")
+	
 
 	return
 
 def main():
+	start_time = time.time()
 	test_adult_data()
+	end_time = time.time()  
+
+	# Calculate the execution time
+	execution_time = end_time - start_time
+
+	print("total Execution time:", execution_time, "seconds")
 
 
 if __name__ == '__main__':
 	main()
+
