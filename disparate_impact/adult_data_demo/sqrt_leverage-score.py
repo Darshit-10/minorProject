@@ -74,7 +74,7 @@ def test_leverage_score_sampling():
 
     def train_test_classifier(random_x_train, random_y_train, random_x_control_train):
         w1 = ut.train_model(random_x_train, random_y_train, random_x_control_train, loss_function, apply_fairness_constraints, apply_accuracy_constraint, sep_constraint, sensitive_attrs, sensitive_attrs_to_cov_thresh, gamma)
-        train_score, test_score, correct_answers_train, correct_answers_test = ut.check_accuracy(w1, random_x_train,random_y_train, x_test, y_test, None, None)
+        train_score, test_score, correct_answers_train, correct_answers_test = ut.check_accuracy(w1, random_x_train,random_y_train, X, y, None, None)
         distances_boundary_test = (np.dot(x_test, w1)).tolist()
         all_class_labels_assigned_test = np.sign(distances_boundary_test)
         correlation_dict_test = ut.get_correlations(None, None, all_class_labels_assigned_test, x_control_test, sensitive_attrs)
@@ -173,8 +173,8 @@ def test_leverage_score_sampling():
         
 
     # Plotting
-    us.plot_num_points_vs_accuracy_and_P_rule(num_points_list, accuracy_list, p_rule_list, "Fairness")
-    us.plot_num_points_vs_accuracy_and_P_rule(num_points_list, accuracy_list2, p_rule_list2, "Accuracy")
+    us.plot_num_points_vs_accuracy_and_P_rule(num_points_list, accuracy_list, p_rule_list, "Fairness","sqrt_levarage_score")
+    us.plot_num_points_vs_accuracy_and_P_rule(num_points_list, accuracy_list2, p_rule_list2, "Accuracy","sqrt_levarage_score")
 
 
 def main():

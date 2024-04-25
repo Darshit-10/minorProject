@@ -26,7 +26,7 @@ def print_classifier_fairness_stats(acc_arr, correlation_dict_arr, cov_dict_arr,
 
 def Train_test_classifier(random_x_train, random_y_train, random_x_control_train,apply_fairness_constraints, apply_accuracy_constraint):
     w1 = ut.train_model(random_x_train, random_y_train, random_x_control_train, loss_function, apply_fairness_constraints, apply_accuracy_constraint, sep_constraint, sensitive_attrs, sensitive_attrs_to_cov_thresh, gamma)
-    train_score, test_score, correct_answers_train, correct_answers_test = ut.check_accuracy(w1, random_x_train,random_y_train, x_test, y_test, None, None)
+    train_score, test_score, correct_answers_train, correct_answers_test = ut.check_accuracy(w1, random_x_train,random_y_train, X, y, None, None)
     distances_boundary_test = (np.dot(x_test, w1)).tolist()
     all_class_labels_assigned_test = np.sign(distances_boundary_test)
     correlation_dict_test = ut.get_correlations(None, None, all_class_labels_assigned_test, x_control_test, sensitive_attrs)
@@ -44,7 +44,7 @@ def generate_uniform_sampling(x_train, y_train, x_control_train, num_points):
     return random_x_train, random_y_train, random_x_control_train
  
 
-def plot_num_points_vs_accuracy_and_P_rule(num_points_list, accuracy_list, p_rule_list, constraint_type):
+def plot_num_points_vs_accuracy_and_P_rule(num_points_list, accuracy_list, p_rule_list, constraint_type,name):
     fig, ax1 = plt.subplots()
 
     color = 'tab:blue'
@@ -60,7 +60,7 @@ def plot_num_points_vs_accuracy_and_P_rule(num_points_list, accuracy_list, p_rul
     ax2.tick_params(axis='y', labelcolor=color)
 
     fig.tight_layout()  
-    plt.title(f'Number of Points vs. Accuracy and P-rule ({constraint_type} Constraint)')
+    plt.title(f'For {name} Number of Points vs. Accuracy and P-rule ({constraint_type} Constraint)')
     plt.grid(True)
     plt.xticks(np.arange(0, max(num_points_list)+1, 100))  # Adjusting x-axis scale
     plt.show()
@@ -169,5 +169,5 @@ if __name__ == '__main__':
         print("execution time of accuracy = ",avg_exe_accuracy)
 
     # Plotting
-    plot_num_points_vs_accuracy_and_P_rule(num_points_list, accuracy_list_f, p_rule_list_f, "Fairness")
-    plot_num_points_vs_accuracy_and_P_rule(num_points_list, accuracy_list_a, p_rule_list_a, "Accuracy")
+    plot_num_points_vs_accuracy_and_P_rule(num_points_list, accuracy_list_f, p_rule_list_f, "Fairness","uniform sampling")
+    plot_num_points_vs_accuracy_and_P_rule(num_points_list, accuracy_list_a, p_rule_list_a, "Accuracy","uniform sampling")
